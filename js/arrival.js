@@ -7,6 +7,40 @@ import { cat, thumb } from './catalog.js';
 
 const SKY = 16;   // drawings in the sky at once: enough to feel like a sky of memories, few enough for an old computer
 
+// Respect for ordinary computers (James, 2026-11-05: "most consumers do not have this level of hardware"): the sky
+// drifts for a while each time the start page shows, then slows to a stop and rests there; hovering a drawing still
+// lifts it. It stands still behind any open sheet, and on a small computer (few cores, little memory, data saving on)
+// it doesn't drift at all. One place decides (run): once a script has played or paused a CSS animation, the browser
+// no longer follows the stylesheet's animation-play-state for it, so the stylesheet can't be the one deciding
+const DRIFT = 25000, SETTLE = 3500;   // ms of drifting, then of slowing down
+export const small = () => (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4 || !!navigator.connection?.saveData;
+let calmed = false, calming = 0, slowing = false, skyEl = null;
+const runs = () => (skyEl ? [...skyEl.querySelectorAll('sky-memory')].flatMap(m => m.getAnimations()) : []);
+function run() {
+  if (slowing) return;
+  const on = !calmed && !small() && document.documentElement.hasAttribute('home') && !document.querySelector('dialog[open]');
+  for (const a of runs()) { if (on) { a.playbackRate = 1; a.play(); } else a.pause(); }
+}
+new MutationObserver(run).observe(document.documentElement, { attributes: true, attributeFilter: ['open', 'home'], subtree: true });
+
+export function drift(sky) {
+  skyEl = sky;
+  clearTimeout(calming);
+  calmed = false; slowing = false;
+  run();
+  calming = setTimeout(() => {
+    slowing = true;
+    const t0 = performance.now();
+    const slow = now => {
+      const k = Math.min(1, (now - t0) / SETTLE), rate = (1 - k) ** 2;   // eases down to nothing
+      for (const a of runs()) if (k < 1) a.playbackRate = rate;
+      if (k < 1) requestAnimationFrame(slow);
+      else { slowing = false; calmed = true; run(); }
+    };
+    requestAnimationFrame(slow);
+  }, DRIFT);
+}
+
 export function fillSky(sky, open) {
   if (sky.childElementCount) return;
   const picks = shuffled(cat.videos.filter(v => v.still), new Date().toDateString()).slice(0, SKY);

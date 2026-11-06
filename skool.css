@@ -38,10 +38,9 @@ html:not([home]) desert-scene::after { background: rgb(var(--bg-rgb) / .74); }
 /* ---- memories drifting across the sky (arrival only) ------------------------------------------------------- */
 memory-sky { position: fixed; inset: var(--bar) 0 auto 0; height: 30vh; z-index: 1; pointer-events: none; overflow-x: clip; transition: opacity .6s; }
 html:not([home]) memory-sky { opacity: 0; visibility: hidden; transition: opacity .4s, visibility 0s .4s; }
-html:not([home]) sky-memory { animation-play-state: paused; }
-/* behind a sheet (a video, search, About) the sky stands still: under the blurred backdrop, every moving frame would
-   have to be blurred again, costing the computer for nothing anyone can see (James, 2026-11-05) */
-html:has(dialog[open]) sky-memory { animation-play-state: paused; }
+/* when the sky moves is decided in arrival.js (run): only on the start page, never behind a sheet (a video, search,
+   About: under the blurred backdrop every moving frame would be blurred again, for nothing anyone sees), and only
+   for its first 25 seconds there */
 sky-memory {
   --w: calc(230 * var(--u));
   position: absolute; left: 0; top: calc(var(--lane) * 1% * .62); width: var(--w);
@@ -57,7 +56,7 @@ sky-memory[depth="1"] { --w: calc(200 * var(--u)); opacity: .75; filter: blur(.5
 sky-memory[depth="2"] { --w: calc(260 * var(--u)); opacity: .92; z-index: 2; }
 sky-memory:hover { animation-play-state: paused; scale: 1.12; rotate: 0deg; opacity: 1; filter: none; z-index: 3; }
 @keyframes drift { from { translate: 104vw 0; } to { translate: calc(-100% - 4vw) 0; } }
-:root[still] sky-memory { animation: none; left: calc(var(--late) * -96vw); }
+:root[still] sky-memory, :root[calm] sky-memory { animation: none; left: calc(var(--late) * -96vw); }
 /* a phone's sky: smaller drawings in a lower band, so they never cross the words */
 @media (max-width: 760px) {
   memory-sky { height: 20vh; }

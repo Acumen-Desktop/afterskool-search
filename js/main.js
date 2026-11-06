@@ -7,7 +7,7 @@
 // shortcut listener (architecture.md).
 import { el, motion, pause, still } from './el.js';
 import { loadCatalog } from './catalog.js';
-import { arrival, fillSky } from './arrival.js';
+import { arrival, fillSky, drift, small } from './arrival.js';
 import { drawings, people, ideas, said } from './doors.js';
 import { tribute } from './tribute.js';
 import { videos } from './videos.js';
@@ -67,7 +67,7 @@ async function route() {
   const next = moment(key);
   const home = next.localName === 'arrival-moment';
   document.documentElement.toggleAttribute('home', home);
-  if (home) fillSky(sky, open);
+  if (home) { fillSky(sky, open); drift(sky); }
   // Every heading arrives as sand (sand.js, James 2026-11-05: "use the blowing sand for intro and outro"). From the
   // top of a moment, the old heading blows away into the new one; on the first visit, or from far down a page, the
   // new one blows in from the desert floor. Without HTML in Canvas, the heading wipes in (ink.js)
@@ -137,3 +137,4 @@ try {
     el('p', { className: 'lead', textContent: `Reload the page to try again. (${e.message})` })));
 }
 if (still.matches) document.documentElement.setAttribute('still', '');
+if (small()) document.documentElement.setAttribute('calm', '');   // a small computer: the sky stands still (arrival.js)
