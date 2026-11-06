@@ -4,6 +4,7 @@
 // No transcript: the reader says so and the video still plays. The video won't play here (offline, blocked, or not
 // allowed to be embedded): it says so and links to YouTube.
 import { el, clock } from './el.js';
+import { mark } from './doors.js';
 import { cat, credits, transcripts, scenes, when, moments } from './catalog.js';
 
 let api = null;
@@ -157,9 +158,40 @@ export async function openReader(id, at = 0) {
       el('button', { type: 'button', className: 'jump', onclick: () => { player?.seekTo?.(s.start, true); player?.playVideo?.(); follow(s.start); } },
         el('time', { textContent: clock(s.start) }), el('span', { textContent: text })),
       copy);
-    return { row, start: s.start };
+    return { row, start: s.start, text, span: row.querySelector('span') };
   });
-  lines.replaceChildren(...rows.map(r => r.row));
+
+  // Find in the words (James, 2026-11-05): every line with them is marked, Enter goes to the next (Shift+Enter, the
+  // one before), and a click on a line plays the video from there. While something is being found, the words stop
+  // following the video, so the place doesn't jump away
+  const findBox = el('input', { type: 'search', placeholder: 'Find in what’s said…', 'aria-label': 'Find in what is said', autocomplete: 'off', spellcheck: false });
+  const findCount = el('small', { 'aria-live': 'polite' });
+  const step = d => el('button', { type: 'button', textContent: d > 0 ? '↓' : '↑', 'aria-label': d > 0 ? 'Next' : 'Previous', onclick: () => show(current + d) });
+  let hits = [], current = -1, marked = [];
+  function show(i) {
+    if (!hits.length) return;
+    current = (i + hits.length) % hits.length;
+    rows.forEach(r => r.row.removeAttribute('hit'));
+    const r = rows[hits[current]];
+    r.row.setAttribute('hit', '');
+    lines.scrollTo({ top: r.row.offsetTop - lines.clientHeight / 3, behavior: 'smooth' });
+    findCount.textContent = `${current + 1} of ${hits.length}`;
+  }
+  findBox.addEventListener('input', () => {
+    const q = findBox.value.trim().toLowerCase();
+    for (const i of marked) rows[i].span.textContent = rows[i].text;
+    rows.forEach(r => r.row.removeAttribute('hit'));
+    hits = q.length < 2 ? [] : rows.flatMap((r, i) => (r.text.toLowerCase().includes(q) ? [i] : []));
+    for (const i of hits) rows[i].span.innerHTML = mark(rows[i].text, q);
+    marked = hits;
+    findCount.textContent = q.length < 2 ? '' : hits.length ? '' : 'Not said';
+    if (hits.length) show(0);
+  });
+  findBox.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); show(current + (e.shiftKey ? -1 : 1)); }
+    if (e.key === 'Escape' && findBox.value) { e.preventDefault(); e.stopPropagation(); findBox.value = ''; findBox.dispatchEvent(new Event('input')); }
+  });
+  lines.replaceChildren(el('line-find', {}, findBox, findCount, step(-1), step(1)), ...rows.map(r => r.row));
   // the person scrolled the words themselves: leave them be for a few seconds
   let reading = 0;
   lines.addEventListener('wheel', () => { reading = Date.now(); }, { passive: true });
@@ -173,7 +205,7 @@ export async function openReader(id, at = 0) {
     rows[i].row.setAttribute('now', '');
     lit = i;
     // scroll only the words (spoken-lines is positioned, so offsetTop is within it), never the page under the sheet
-    if (Date.now() - reading > 4000) lines.scrollTo({ top: rows[i].row.offsetTop - lines.clientHeight / 3, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (!findBox.value && Date.now() - reading > 4000) lines.scrollTo({ top: rows[i].row.offsetTop - lines.clientHeight / 3, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
   follow(at);
 }
