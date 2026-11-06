@@ -26,9 +26,22 @@ function close() {
   try { player?.destroy(); } catch { /* already gone */ }
   player = null;
 }
-// Back closes the reader, as on a phone: opening it adds a history entry (same address), closing it any other way
-// (×, Escape, a click outside) takes that entry back off, so Back after that still goes back a moment
-dialog.addEventListener('close', () => { close(); dialog.replaceChildren(); if (history.state?.reader) history.back(); });
+// The open video is in the address (?watch=<id>&t=<second>), so it can be bookmarked or sent (James, 2026-11-05).
+// It's in the query, not the #: the # is the moment under the reader, and changing it would redraw that moment.
+// Back closes the reader, as on a phone: opening it adds a history entry, closing it any other way (×, Escape, a click
+// outside) takes that entry back off, so Back after that still goes back a moment
+const address = (id, at) => {
+  const u = new URL(location.href);
+  u.searchParams.delete('watch'); u.searchParams.delete('t');
+  if (id) { u.searchParams.set('watch', id); if (at >= 1) u.searchParams.set('t', String(Math.floor(at))); }
+  return u.href;
+};
+export const watching = () => { const q = new URLSearchParams(location.search); return q.get('watch') ? { id: q.get('watch'), at: Number(q.get('t')) || 0 } : null; };
+dialog.addEventListener('close', () => {
+  close(); dialog.replaceChildren();
+  if (history.state?.reader) history.back();
+  else if (watching()) history.replaceState(history.state, '', address(null));   // closed by a move elsewhere: tidy the address
+});
 addEventListener('popstate', () => { if (dialog.open && !history.state?.reader) dialog.close(); });
 // a link inside the reader to another moment: close first (its entry comes off), then go
 function leaveTo(href) {
@@ -49,11 +62,19 @@ export async function openReader(id, at = 0) {
   const ideas = (v.concepts || []).map(c => cat.idea.get(c)).filter(Boolean);
   const board = scenes(v).filter(s => s.at != null);   // a scene can be jumped to only when the video's length is known
   const lines = el('spoken-lines', { 'aria-label': 'What is said' }, el('p', { className: 'note', textContent: v.has_transcript ? 'Loading the words…' : 'No transcript for this one yet. The video still plays.' }));
+  // a link to this video at the second it's playing now: this site's address, so it opens here, in the reader
+  const share = el('button', { type: 'button', className: 'share', textContent: 'Copy link' });
+  share.onclick = async () => {
+    const now = player?.getCurrentTime?.() ?? at;
+    try { await navigator.clipboard.writeText(address(v.id, now)); share.textContent = `Copied, at ${clock(now)}`; } catch { share.textContent = 'Can’t copy'; }
+    setTimeout(() => { share.textContent = 'Copy link'; }, 2000);
+  };
   const shut = el('button', { type: 'button', className: 'shut', 'aria-label': 'Close', textContent: '×', onclick: () => dialog.close() });
   dialog.replaceChildren(el('reader-sheet', { tone: Math.max(0, cat.topics.findIndex(t => t.name === v.discipline)), bare: !v.has_transcript },
     el('reader-head', {},
       el('h2', { textContent: v.title }),
       el('p', {}, [v.discipline, who.voice && `Voice: ${who.voice}`, who.about.length && `About ${who.about.join(', ')}`, v.duration && clock(v.duration), v.year].filter(Boolean).join(' · ')),
+      share,
       el('a', { href: link(at), target: '_blank', rel: 'noopener', textContent: 'Watch on YouTube' }),
       shut),
     frame,
@@ -69,7 +90,8 @@ export async function openReader(id, at = 0) {
       ideas.length ? el('idea-links', {}, el('span', { textContent: 'More about' }), ...ideas.map(i =>
         el('a', { href: `#videos?idea=${encodeURIComponent(i.id)}`, tone: i.tone, textContent: i.name, onclick: e => { e.preventDefault(); leaveTo(e.currentTarget.getAttribute('href')); } }))) : null) : null,
     lines));
-  if (!dialog.open) { history.pushState({ reader: true }, ''); dialog.showModal(); }
+  if (!dialog.open) { history.pushState({ reader: true }, '', address(v.id, at)); dialog.showModal(); }
+  else history.replaceState({ reader: true }, '', address(v.id, at));   // another video in the open reader
   shut.focus();
 
   // the player

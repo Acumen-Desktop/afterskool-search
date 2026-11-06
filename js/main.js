@@ -11,7 +11,7 @@ import { arrival, fillSky } from './arrival.js';
 import { drawings, people, ideas, said } from './doors.js';
 import { tribute } from './tribute.js';
 import { videos } from './videos.js';
-import { openReader } from './reader.js';
+import { openReader, watching } from './reader.js';
 import { openSearch } from './search.js';
 import { openAbout } from './about.js';
 import { ink } from './ink.js';
@@ -113,7 +113,12 @@ if (!/Mac|iPhone|iPad/.test(navigator.platform)) document.querySelector('top-bar
 try {
   await loadCatalog();
   addEventListener('hashchange', route);
+  // a shared link to a video (?watch=…): the moment under it, then the reader over it. The address without the video
+  // goes first in the history, so closing the reader leaves the page behind it, as if the person had opened it here
+  const shared = watching();
+  if (shared) history.replaceState(null, '', location.pathname + location.hash);
   route();
+  if (shared) openReader(shared.id, shared.at);
 } catch (e) {
   main.replaceChildren(el('arrival-moment', {}, el('h1', { textContent: 'The index didn’t load.' }),
     el('p', { className: 'lead', textContent: `Reload the page to try again. (${e.message})` })));
