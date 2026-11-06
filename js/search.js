@@ -2,7 +2,7 @@
 // One box over people, ideas, drawings and videos at once, and what was said once three letters are typed (that is
 // when the transcripts load). Arrow keys move, Enter opens, Escape closes; all from the keyboard.
 import { el, clock } from './el.js';
-import { cat, findLines, thumb } from './catalog.js';
+import { cat, findLines, thumb, findMoments } from './catalog.js';
 import { mark } from './doors.js';
 
 const dialog = el('dialog', { className: 'search', 'aria-label': 'Search' });
@@ -48,9 +48,12 @@ async function look() {
   ];
   // drawn twice: at once from the catalogue, then again when the transcripts answer. A newer keystroke wins: an
   // older answer arriving late is dropped (ask !== asked)
-  const draw = lines => {
+  const draw = (lines, moments) => {
     if (ask !== asked) return;
-    const all = lines ? [...groups, ['Said', lines.slice(0, 8).map(l => ({ word: l.text, quote: true, more: `${l.video.title} · ${clock(l.start)}`, run: () => go(null, l.video.id, l.start) }))]] : groups;
+    const all = lines ? [...groups,
+      // moments from the transcripts: pictures described and people named, each opening at its second
+      ['In the videos', (moments || []).map(m => ({ word: m.text, more: `${m.k === 'person' ? 'Named' : m.k === 'picture' ? 'Pictured' : 'Idea'} in ${m.video.title} · ${clock(m.t)}`, img: thumb(m.video), run: () => go(null, m.v, m.t) }))],
+      ['Said', lines.slice(0, 8).map(l => ({ word: l.text, quote: true, more: `${l.video.title} · ${clock(l.start)}`, run: () => go(null, l.video.id, l.start) }))]] : groups;
     picks = [];
     found.replaceChildren(...all.filter(([, list]) => list.length).map(([name, list]) => el('li', { role: 'presentation' },
       el('b', { textContent: name }),
@@ -65,8 +68,11 @@ async function look() {
     hint.textContent = picks.length ? '↑ ↓ to move, Enter to open' : q.length < 3 ? 'Keep typing…' : 'Nothing found. Try fewer or other words.';
     choose(0);
   };
-  draw(null);
-  if (q.length >= 3) draw(await findLines(q, 8).catch(() => []));
+  draw(null, null);
+  if (q.length >= 3) {
+    const [lines, inVideos] = await Promise.all([findLines(q, 8).catch(() => []), findMoments(q, { most: 8 }).catch(() => [])]);
+    draw(lines, inVideos);
+  }
 }
 
 let timer;

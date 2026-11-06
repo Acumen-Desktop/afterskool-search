@@ -337,6 +337,19 @@ reader-sheet[bare] { grid-template: "head" auto "player" minmax(0, 1fr) "more" a
 reader-sheet[bare] player-frame { height: 100%; max-width: 100%; justify-self: center; }
 reader-sheet[bare] spoken-lines { display: none; }
 reader-more { grid-area: more; display: grid; align-content: start; gap: calc(14 * var(--u)); min-height: 0; overflow: auto; }
+/* named and pictured in this video (the moments graph): small jumps, people in the accent, pictures in ink */
+moment-chips { display: flex; flex-wrap: wrap; gap: calc(6 * var(--u)); }
+moment-chips button {
+  display: inline-flex; gap: calc(6 * var(--u)); align-items: baseline; padding: calc(4 * var(--u)) calc(10 * var(--u));
+  border-radius: 999px; border: var(--hair) solid var(--line); background: var(--wash); cursor: pointer; font-size: calc(14 * var(--t));
+}
+moment-chips button:hover { background: var(--wash-strong); border-color: var(--accent); }
+moment-chips button[kind="person"] span { font-family: var(--font-display); font-style: italic; color: var(--accent); }
+moment-chips time { color: var(--muted); font-size: calc(12 * var(--t)); font-variant-numeric: tabular-nums; }
+/* the picture finder on the drawings page */
+picture-finder { display: block; margin: 0 auto calc(48 * var(--u)); }
+picture-finder .note { text-align: center; }
+picture-finder li.none { list-style: none; text-align: center; color: var(--muted); font-style: italic; }
 story-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(10 * var(--u)); }
 story-board button { position: relative; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--paper); transition: translate .2s; }
 story-board button:hover { translate: 0 calc(-3 * var(--u)); }

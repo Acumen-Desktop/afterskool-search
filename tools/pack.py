@@ -14,7 +14,7 @@ from content import args, site
 a = args(('--url', {'default': ''}), ('--listed', {'action': 'store_true'}))
 url = a.url.rstrip('/')
 out = site / 'out'
-DATA = ['graphData.json', 'artworkAssetsData.json', 'transcriptsIndex.json']   # all the page fetches
+DATA = ['graphData.json', 'artworkAssetsData.json', 'transcriptsIndex.json', 'moments.json']   # all the page fetches
 CODE = ['index.html', 'look.css', 'skool.css', 'favicon.svg', 'js', 'scene']   # this repo's part
 
 if out.exists():
@@ -33,8 +33,10 @@ if url:
 (out / 'data').mkdir()
 text = ''
 for name in DATA:
+    if not (a.content / 'data/site' / name).exists():
+        continue   # moments.json is optional: the site manages without it
     shutil.copy2(a.content / 'data/site' / name, out / 'data' / name)
-    if name != 'transcriptsIndex.json':
+    if name not in ('transcriptsIndex.json', 'moments.json'):
         text += (a.content / 'data/site' / name).read_text()
 
 # only the pictures the data names, then the thumbs (tools/thumbs.py) and the share card

@@ -9,7 +9,8 @@ Live (unlisted for now): https://afterskool-search.pages.dev
 
 ## What it does
 - **A drawing:** Mark's drawings on a pinboard, each drawing itself as it comes into view. Turn one over to see which
-  video it's from and when.
+  video it's from and when. Not on the board? Describe it: the pictures described in the transcripts ("a king
+  counting his gold") open their video at that second.
 - **A name:** the narrators and the thinkers they talk about, as a wall of names.
 - **An idea:** four topics with four ideas each, a 4x4.
 - **Something said:** one box over the transcripts; each line opens its video right where it's said.
@@ -57,5 +58,6 @@ makes a Worker), which is what gives it the `pages.dev` address.
   - `js/videos.js`: the cards and Refine.
   - `js/reader.js`: the player and its words. `js/search.js`, `js/about.js`: the sheets.
 - **The effects:** `js/ink.js` (the pen), `js/sand.js` (the sand), `js/draw.js` (drawings drawing themselves).
-- **Data:** `js/catalog.js`, everything from the data; every count and name on the page comes from it.
+- **Data:** `js/catalog.js`, everything from the data; every count and name on the page comes from it. That includes
+  the moments graph (`data/moments.json`: people, pictures and ideas from the transcripts, each at a second).
 - **Tools:** `tools/`: link, thumbs and pack.

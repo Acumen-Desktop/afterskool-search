@@ -6,7 +6,7 @@
 //   ideas()     the 4x4: four topics in 4x4's four zone colours, four ideas each
 //   said()      one box that looks through what was said in the transcripts (loaded only now: they are about 1 MB)
 import { el, clock, shuffled } from './el.js';
-import { cat, waysIn, transcripts, findLines, thumb, when } from './catalog.js';
+import { cat, waysIn, transcripts, findLines, thumb, when, findMoments, moments } from './catalog.js';
 
 const heading = (text, lead) => [el('h2', { innerHTML: text }), lead && el('p', { className: 'lead', textContent: lead })];
 
@@ -37,9 +37,38 @@ export function drawings(open) {
   };
   return el('door-moment', { door: 'drawings' },
     ...heading('Which <em>drawing</em>?', 'Turn one over to see which video it’s from, and when.'),
+    finder(open),
     el('drawing-shelf', {}, ...cat.families.map(f => el('drawing-family', {},
       el('h3', { textContent: f.name }),
       el('family-cards', {}, ...f.samples.map(card))))));
+}
+
+// Not on the board? Describe it. The 21 cut-outs are only a few of Mark's drawings, but the transcripts say what
+// many of the others show ("a greedy king counting his gold"): the moments graph (catalog.js › findMoments) finds the
+// picture described and opens its video at that second, where the drawing itself is on screen
+function finder(open) {
+  const box = el('input', { type: 'search', placeholder: 'Describe it: a greedy king, a monkey, a clock…', 'aria-label': 'Describe the picture', autocomplete: 'off', spellcheck: false });
+  const list = el('ol', { className: 'lines found-pictures', 'aria-live': 'polite' });
+  const note = el('p', { className: 'note' });
+  moments().then(g => {
+    const vids = new Set(g.moments.map(m => m.v)).size, pics = g.moments.filter(m => m.k === 'picture').length;
+    note.textContent = vids ? `Not on the board? ${pics} pictures are described in the ${vids} videos with transcripts.` : '';
+    if (!vids) finderBox.hidden = true;
+  });
+  let timer;
+  box.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const q = box.value.trim();
+      const found = q.length < 3 ? [] : await findMoments(q, { kinds: ['picture', 'person'], most: 30 });
+      list.replaceChildren(...found.map(m => el('li', {}, el('button', { type: 'button', onclick: () => open(m.v, m.t) },
+        el('q', { innerHTML: mark(m.text, q.split(/\s+/)[0]) }),
+        el('span', { className: 'from', textContent: `${m.video.title} · ${clock(m.t)}${m.q ? ` · “${m.q}”` : ''}` })))));
+      if (q.length >= 3 && !found.length) list.replaceChildren(el('li', { className: 'none', textContent: `Nothing described as “${q}” yet. Try one word: king, money, monkey.` }));
+    }, 140);
+  });
+  const finderBox = el('picture-finder', {}, note, el('line-search', {}, box), list);
+  return finderBox;
 }
 
 export function people() {

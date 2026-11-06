@@ -4,7 +4,7 @@
 // No transcript: the reader says so and the video still plays. The video won't play here (offline, blocked, or not
 // allowed to be embedded): it says so and links to YouTube.
 import { el, clock } from './el.js';
-import { cat, credits, transcripts, scenes, when } from './catalog.js';
+import { cat, credits, transcripts, scenes, when, moments } from './catalog.js';
 
 let api = null;
 function youtube() {
@@ -112,6 +112,17 @@ export async function openReader(id, at = 0) {
       el('p', { textContent: 'This video won’t play here: you may be offline, or YouTube doesn’t allow it on other sites.' }),
       el('a', { href: link(at), target: '_blank', rel: 'noopener', textContent: 'Open it on YouTube' })));
   }
+
+  // who's named and what's pictured in this video, from the moments graph: each a jump to its second
+  moments().then(g => {
+    const here = g.moments.filter(m => m.v === v.id && m.k !== 'idea');
+    if (!here.length || !frame.isConnected) return;
+    let more = dialog.querySelector('reader-more');
+    if (!more) { more = el('reader-more'); frame.after(more); }
+    more.append(el('moment-chips', { 'aria-label': 'Named and pictured in this video' }, ...here.map(m =>
+      el('button', { type: 'button', kind: m.k, title: m.q ? `“${m.q}”` : m.text, onclick: () => { player?.seekTo?.(m.t, true); player?.playVideo?.(); follow(m.t); } },
+        el('time', { textContent: clock(m.t) }), el('span', { textContent: m.text })))));
+  });
 
   // the words
   if (!v.has_transcript) return;

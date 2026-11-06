@@ -67,6 +67,28 @@ export const waysIn = {
 let loading = null;
 export const transcripts = () => (loading ||= fetch('data/transcriptsIndex.json').then(r => r.json()).catch(e => { loading = null; throw e; }));
 
+// The moments graph (data/moments.json, scripts/11_build_moments.py in the content): people named, pictures described
+// and ideas stated in each transcript, at the second they're said. Loaded only when looked for, like the transcripts
+let momentsLoading = null;
+export const moments = () => (momentsLoading ||= fetch('data/moments.json').then(r => (r.ok ? r.json() : { people: [], moments: [] }))
+  .catch(() => ({ people: [], moments: [] })));
+
+// Moments matching some words: every word must appear in the label, its tags, its quote or the person's name.
+// Pictures first, then people, then ideas; at most `most`
+export async function findMoments(words, { kinds = ['picture', 'person', 'idea'], most = 40 } = {}) {
+  const g = await moments(), qs = words.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  if (!qs.length) return [];
+  // each word matches at the start of a word ("king" finds "kings", not "drinking")
+  const res = qs.map(w => new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  const order = { picture: 0, person: 1, idea: 2 };
+  return g.moments
+    .filter(m => kinds.includes(m.k) && cat.video.has(m.v))
+    .filter(m => { const hay = `${m.text} ${(m.tags || []).join(' ')} ${m.q || ''}`.toLowerCase(); return res.every(r => r.test(hay)); })
+    .sort((a, b) => order[a.k] - order[b.k])
+    .slice(0, most)
+    .map(m => ({ ...m, video: cat.video.get(m.v) }));
+}
+
 // One spoken line for each transcript match: [{ video, start, text }], up to `most`
 export async function findLines(words, most = 40) {
   const all = await transcripts(), q = words.trim().toLowerCase();
