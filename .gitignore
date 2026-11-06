@@ -1,0 +1,11 @@
+# the content: Mark Wooding's pictures and the data, linked in by tools/link.py from a private folder, never committed
+/data
+/stills
+/assets
+/thumbs
+/share.jpg
+# what tools/pack.py makes for the host
+/out/
+.DS_Store
+__pycache__/
+.wrangler/

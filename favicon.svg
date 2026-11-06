@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><!-- golden hour sand, a hand-written "a" and the pen's dot (look.css: --bg, --accent, --ink) -->
+<rect width="64" height="64" rx="14" fill="#e8d6b2"/>
+<text x="31" y="47" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="46" fill="#242520">a</text>
+<circle cx="47" cy="45" r="5" fill="#a43e20"/>
+</svg>
