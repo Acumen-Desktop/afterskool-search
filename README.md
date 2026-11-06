@@ -60,4 +60,4 @@ makes a Worker), which is what gives it the `pages.dev` address.
 - **The effects:** `js/ink.js` (the pen), `js/sand.js` (the sand), `js/draw.js` (drawings drawing themselves).
 - **Data:** `js/catalog.js`, everything from the data; every count and name on the page comes from it. That includes
   the moments graph (`data/moments.json`: people, pictures and ideas from the transcripts, each at a second).
-- **Tools:** `tools/`: link, thumbs and pack.
+- **Tools:** `tools/`: link, thumbs, pack, serve, and `browser-check.mjs` (a throwaway headless Chrome 157 for checks).
