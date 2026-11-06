@@ -116,7 +116,7 @@ try {
   // a shared link to a video (?watch=…): the moment under it, then the reader over it. The address without the video
   // goes first in the history, so closing the reader leaves the page behind it, as if the person had opened it here
   const shared = watching();
-  if (shared) history.replaceState(null, '', location.pathname + location.hash);
+  if (shared) history.replaceState(null, '', `/${location.hash}`);
   route();
   if (shared) openReader(shared.id, shared.at);
 } catch (e) {

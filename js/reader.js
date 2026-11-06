@@ -26,17 +26,23 @@ function close() {
   try { player?.destroy(); } catch { /* already gone */ }
   player = null;
 }
-// The open video is in the address (?watch=<id>&t=<second>), so it can be bookmarked or sent (James, 2026-11-05).
-// It's in the query, not the #: the # is the moment under the reader, and changing it would redraw that moment.
-// Back closes the reader, as on a phone: opening it adds a history entry, closing it any other way (×, Escape, a click
-// outside) takes that entry back off, so Back after that still goes back a moment
+// The open video is its own address: /watch/<its title as a slug>?t=1m30s (James, 2026-11-05: readable, with the
+// time, and nothing else), so it can be bookmarked or sent. The time follows the video as it plays. The moment under
+// the reader isn't in it: a shared link opens over the start. Back closes the reader, as on a phone: opening it adds
+// a history entry, closing it any other way (×, Escape, a click outside) takes that entry back off
+const stamp = s => { s = Math.floor(s); const m = Math.floor(s / 60); return m ? `${m}m${s % 60 ? `${s % 60}s` : ''}` : `${s}s`; };
+const seconds = t => { if (!t) return 0; if (/^\d+$/.test(t)) return +t; const m = t.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/); return m ? (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0; };
 const address = (id, at) => {
-  const u = new URL(location.href);
-  u.searchParams.delete('watch'); u.searchParams.delete('t');
-  if (id) { u.searchParams.set('watch', id); if (at >= 1) u.searchParams.set('t', String(Math.floor(at))); }
-  return u.href;
+  const v = id && cat.video.get(id);
+  if (!v) return `/${location.pathname.startsWith('/watch/') ? '' : location.search}${location.hash}`;   // no video: the page under it
+  return `/watch/${v.slug}${at >= 1 ? `?t=${stamp(at)}` : ''}`;
 };
-export const watching = () => { const q = new URLSearchParams(location.search); return q.get('watch') ? { id: q.get('watch'), at: Number(q.get('t')) || 0 } : null; };
+// the video an address names: /watch/<slug>?t=…, or the older ?watch=<id>&t=<seconds>
+export const watching = () => {
+  const q = new URLSearchParams(location.search), m = location.pathname.match(/^\/watch\/([^/]+)/);
+  const v = m ? cat.slug.get(decodeURIComponent(m[1])) : cat.video.get(q.get('watch'));
+  return v ? { id: v.id, at: seconds(q.get('t')) } : null;
+};
 dialog.addEventListener('close', () => {
   close(); dialog.replaceChildren();
   if (history.state?.reader) history.back();
@@ -101,7 +107,17 @@ export async function openReader(id, at = 0) {
       videoId: v.id,
       playerVars: { start: Math.floor(at), autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
       events: {
-        onReady: () => { poll = setInterval(() => { const t = player?.getCurrentTime?.(); if (typeof t === 'number') follow(t); }, 500); },
+        onReady: () => {
+          let shown = -1;
+          poll = setInterval(() => {
+            const t = player?.getCurrentTime?.();
+            if (typeof t !== 'number') return;
+            follow(t);
+            // the address keeps the time, to the nearest 5 seconds, so copying it from the bar starts where you are
+            const five = Math.floor(t / 5) * 5;
+            if (five !== shown && history.state?.reader && dialog.open) { shown = five; history.replaceState(history.state, '', address(v.id, five)); }
+          }, 500);
+        },
         onError: () => broken(),
       },
     });

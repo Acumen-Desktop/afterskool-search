@@ -27,7 +27,7 @@ for name in CODE:
 # the share card's picture, as a full address when the live one is known
 if url:
     page = out / 'index.html'
-    page.write_text(page.read_text().replace('content="share.jpg"', f'content="{url}/share.jpg"'))
+    page.write_text(page.read_text().replace('content="/share.jpg"', f'content="{url}/share.jpg"'))
 
 # the data
 (out / 'data').mkdir()

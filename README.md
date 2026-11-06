@@ -35,7 +35,7 @@ tools find it with `--content PATH`, or `$AFTERSKOOL_CONTENT`, or `../after-skoo
 
     python3 tools/link.py                 # link the content in (ignored by git)
     python3 tools/thumbs.py               # small copies of the pictures, once (needs Pillow)
-    python3 -m http.server 3011           # then open http://localhost:3011
+    python3 tools/serve.py                # then open http://localhost:3011 (also serves /watch/… addresses)
 
 **Putting it online:** `python3 tools/pack.py --url https://afterskool-search.pages.dev` makes `out/`, which holds
 the site, the data and only the pictures it uses (about 1,350 files, 84 MB). It's unlisted unless `--listed` is
