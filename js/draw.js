@@ -1,5 +1,5 @@
 // Drawn in: each of Mark's drawings draws itself the first time it comes into view, the way it appears on his
-// whiteboard. The black line work goes down first, behind a pen sweeping across with a wobble, then the colour washes
+// whiteboard. The black line work goes down first, sweeping across with a wobble, then the colour washes
 // in from the top. It's the real picture in a canvas over the image (same-origin, so a plain 2D canvas can read it,
 // no HTML in Canvas needed), so it works in every browser. With reduced motion, the drawings are just there.
 //   drawIn(img)   when the image is on screen and loaded: the canvas over it, the image hidden until the end
@@ -41,13 +41,11 @@ export async function drawIn(img, { duration = 1700 } = {}) {
   canvas.setAttribute('aria-hidden', 'true');
   canvas.className = 'drawing-in';
   canvas.style.cssText = `position:absolute;left:${img.offsetLeft + x}px;top:${img.offsetTop + y}px;width:${w}px;height:${h}px;mix-blend-mode:multiply;pointer-events:none`;
-  const nib = document.createElement('ink-nib');
-  nib.style.cssText = 'position:absolute;translate:none;z-index:2';
-  img.offsetParent?.append(canvas, nib);
+  img.offsetParent?.append(canvas);
   img.style.opacity = '0';
   const ctx = canvas.getContext('2d');
 
-  // the pen: a front sweeping left to right, wobbling a little row by row, while its tip zig-zags up and down
+  // the front: sweeping left to right, wobbling a little row by row
   const wobble = Array.from({ length: 24 }, () => (Math.random() - 0.5) * 0.08 * W);
   const front = (t, yy) => t * (W * 1.12) - W * 0.06 + wobble[Math.floor((yy / H) * 23.99)];
   const LINES = 0.62;   // the share of the time the line work takes; the colour has the rest
@@ -79,18 +77,11 @@ export async function drawIn(img, { duration = 1700 } = {}) {
         ctx.drawImage(tmp, 0, 0);
         ctx.restore();
       }
-      // the pen's tip on the front, scribbling up and down
-      if (t < 1) {
-        const yy = (Math.abs(((now - t0) / 90) % 2 - 1)) * H;
-        nib.style.left = `${img.offsetLeft + x + Math.max(0, front(t, yy)) / ratio}px`;
-        nib.style.top = `${img.offsetTop + y + yy / ratio}px`;
-      } else nib.style.opacity = '0';
       if (T < 1) requestAnimationFrame(frame); else resolve();
     };
     requestAnimationFrame(frame);
   });
   img.style.opacity = '';
-  nib.remove();
   canvas.animate({ opacity: [1, 0] }, { duration: 250, fill: 'forwards' }).finished.then(() => canvas.remove(), () => canvas.remove());
 }
 

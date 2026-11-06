@@ -9,7 +9,9 @@ const dialog = el('dialog', { className: 'search', 'aria-label': 'Search' });
 const box = el('input', { type: 'search', placeholder: 'A name, an idea, a drawing, a title, words said…', 'aria-label': 'Search', autocomplete: 'off', spellcheck: false, role: 'combobox', 'aria-controls': 'found', 'aria-expanded': 'true' });
 const found = el('ol', { id: 'found', role: 'listbox', 'aria-label': 'Found' });
 const hint = el('p', { className: 'note' });
-dialog.append(el('search-sheet', {}, box, hint, found));
+// before anything is typed, the four ways in (James, 2026-11-05: he expected search to bring back the four doors)
+const ways = el('ways-in', { role: 'group', 'aria-label': 'Or start from' });
+dialog.append(el('search-sheet', {}, box, ways, hint, found));
 dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
 
 let go = () => {}, picks = [], at = 0, asked = 0;
@@ -28,7 +30,16 @@ function choose(i) {
 
 async function look() {
   const q = box.value.trim().toLowerCase(), ask = ++asked;
-  if (!q) { picks = []; found.replaceChildren(); hint.textContent = `${cat.speakers.length} people, ${cat.ideas.length} ideas, ${cat.drawings.length} drawings, ${cat.videos.length} videos.`; return; }
+  ways.hidden = !!q;
+  if (!q) {
+    picks = []; found.replaceChildren();
+    hint.textContent = `Or type: ${cat.speakers.length} people, ${cat.ideas.length} ideas, ${cat.drawings.length} drawings, ${cat.videos.length} videos.`;
+    ways.replaceChildren(...[
+      ['#drawings', 'a drawing', `${cat.drawings.length} drawings`], ['#people', 'a name', `${cat.speakers.length} people`],
+      ['#ideas', 'an idea', `${cat.ideas.length} ideas`], ['#said', 'something said', `${cat.videos.filter(v => v.has_transcript).length} transcripts`],
+    ].map(([to, word, count]) => el('button', { type: 'button', onclick: () => go(to) }, el('small', { textContent: 'I remember…' }), el('b', { textContent: word }), el('small', { textContent: count }))));
+    return;
+  }
   const groups = [
     ['People', cat.speakers.filter(s => has(s.name, q)).slice(0, 5).map(s => ({ word: s.name, more: `${s.video_count || 0} videos`, initials: initials(s.name), run: () => go(`#videos?voice=${encodeURIComponent(s.id)}`) }))],
     ['Ideas', cat.ideas.filter(i => has(i.name, q) || has(i.topic, q)).slice(0, 5).map(i => ({ word: i.name, more: i.topic, tone: i.tone, run: () => go(`#videos?idea=${encodeURIComponent(i.id)}`) }))],

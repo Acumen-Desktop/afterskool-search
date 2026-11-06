@@ -80,7 +80,10 @@ top-bar nav > * {
 top-bar nav > :hover { background: var(--wash-hover); }
 top-bar .search { background: var(--wash-strong); }
 kbd { font: calc(13 * var(--t)) var(--font); padding: calc(2 * var(--u)) calc(7 * var(--u)); border: var(--hair) solid var(--line); border-radius: calc(5 * var(--u)); color: var(--muted); }
-@media (max-width: 760px) { top-bar .home small, top-bar nav a { display: none; } }
+@media (max-width: 760px) { top-bar .home small, top-bar nav a:not(.start) { display: none; } }
+/* back to the four doors, from anywhere; on the doors themselves it isn't needed */
+top-bar .start { font-family: var(--font-display); font-style: italic; }
+html[home] top-bar .start { display: none; }
 
 main { position: relative; z-index: 2; display: block; min-height: 100vh; padding-top: var(--bar); box-sizing: border-box; }
 
@@ -140,13 +143,6 @@ mini-grid span:nth-child(odd) { opacity: .78; }
   door-names span:nth-child(1) { font-size: calc(30 * var(--t)); }
   door-names span:nth-child(2) { font-size: calc(22 * var(--t)); }
   door-names span:nth-child(3) { display: none; }
-}
-
-/* the pen that writes the headings in (ink.js) */
-ink-nib {
-  position: fixed; left: 0; top: 0; z-index: 41; width: calc(14 * var(--u)); height: calc(14 * var(--u)); margin: calc(-7 * var(--u));
-  border-radius: 50%; background: var(--accent); pointer-events: none;
-  box-shadow: 0 0 0 calc(3 * var(--u)) rgb(var(--bg-rgb) / .6), 0 0 calc(20 * var(--u)) var(--accent);
 }
 
 /* ---- a door's moment ---------------------------------------------------------------------------------------- */
@@ -392,6 +388,16 @@ search-sheet {
 }
 search-sheet input { width: 100%; box-sizing: border-box; padding: calc(14 * var(--u)) calc(20 * var(--u)); border: 0; border-bottom: var(--rule) solid var(--line); background: none; font: italic calc(32 * var(--t)) var(--font-display); }
 search-sheet input:focus { outline: none; border-bottom-color: var(--accent); }
+/* before anything is typed: the four ways in, so search is also a way back to the start */
+ways-in { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(10 * var(--u)); margin: calc(14 * var(--u)) calc(8 * var(--u)) calc(6 * var(--u)); }
+ways-in button {
+  display: grid; gap: calc(2 * var(--u)); padding: calc(14 * var(--u)) calc(16 * var(--u)); text-align: left; cursor: pointer;
+  border: var(--hair) solid var(--line); border-radius: var(--radius); background: var(--wash);
+}
+ways-in button:hover, ways-in button:focus-visible { background: var(--wash-strong); border-color: var(--accent); }
+ways-in small { color: var(--muted); font-size: calc(13 * var(--t)); }
+ways-in b { font: italic normal calc(22 * var(--t)) var(--font-display); }
+@media (max-width: 760px) { ways-in { grid-template-columns: 1fr 1fr; } }
 search-sheet .note { margin: calc(10 * var(--u)) calc(20 * var(--u)); color: var(--muted); font-size: calc(15 * var(--t)); }
 search-sheet ol, search-sheet ul { list-style: none; margin: 0; padding: 0; }
 search-sheet ol { max-height: 58vh; overflow: auto; overscroll-behavior: contain; }

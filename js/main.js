@@ -47,8 +47,8 @@ function moment(hash) {
 }
 
 let turn = 0;
-// the pen writes a moment's heading the first time it's seen on this visit; coming back, it's simply there
-const written = new Set();
+// moments seen on this visit: coming back to one, its sand blows quicker
+const seen = new Set();
 async function route() {
   const mine = ++turn;
   for (const d of document.querySelectorAll('dialog[open]')) d.close();   // a new moment: no sheet left over it
@@ -56,14 +56,16 @@ async function route() {
   const home = next.localName === 'arrival-moment';
   document.documentElement.toggleAttribute('home', home);
   if (home) fillSky(sky, open);
-  // the old moment leaves upward, the new one's heading is written in, then its parts rise one by one
+  // Every heading arrives as sand (sand.js, James 2026-11-05: "use the blowing sand for intro and outro"). From the
+  // top of a moment, the old heading blows away into the new one; on the first visit, or from far down a page, the
+  // new one blows in from the desert floor. Without HTML in Canvas, the heading wipes in (ink.js)
   const old = main.firstElementChild?.localName?.endsWith('-moment') ? main.firstElementChild : null;
   const oldHead = old?.querySelector('h1, h2');
-  // going home from a door: its heading blows away as sand into the arrival's line (sand.js), where it can
-  const blow = home && oldHead && canSand() && scrollY < 40;   // only from the top: the line forms at the top
+  const sandy = canSand();
+  const blow = sandy && oldHead && scrollY < 40;
   if (blow) {
-    // the old moment stays where it is, out of the flow, while the arrival lays out under it
-    const top = old.getBoundingClientRect().top + scrollY - main.getBoundingClientRect().top - scrollY;
+    // the old moment stays where it is, out of the flow, while the new one lays out under it
+    const top = old.getBoundingClientRect().top - main.getBoundingClientRect().top;
     Object.assign(old.style, { position: 'absolute', left: '0', right: '0', top: `${top}px`, pointerEvents: 'none' });
     for (const c of old.children) if (!c.contains(oldHead)) motion(c, { opacity: [1, 0] }, { duration: 300 });
   } else if (old) await motion(old, { opacity: [1, 0], translate: ['0 0', '0 -2vh'] }, { duration: 240 });
@@ -79,16 +81,19 @@ async function route() {
   // the heading's siblings in the head come in with it
   const headParts = head?.parentElement !== next ? [...head.parentElement.children].filter(c => c !== head) : [];
   headParts.forEach(p => { p.style.opacity = '0'; });
-  // the arrival is the one moment where the pen is the point: everything waits for it. Elsewhere the parts rise while
-  // the heading is still being written, so a door opens without a wait
-  let writing;
-  if (blow) {
+  // the arrival waits for its sand: it's the moment. Elsewhere the parts rise while the sand is still settling
+  const back = seen.has(location.hash);
+  seen.add(location.hash);
+  const duration = home ? (old ? 2400 : 2800) : back ? 1300 : 1800;
+  let writing = null;
+  if (head && sandy) {
     const layer = document.body.appendChild(el('sand-layer'));
-    writing = sand(oldHead, head, layer).then(played => (played ? null : ink(head))).then(() => { head.style.opacity = ''; old.remove(); layer.remove(); scrollTo(0, 0); });
-  } else if (head && written.has(location.hash)) {
-    writing = Promise.resolve().then(() => { head.style.opacity = ''; return motion(head, { opacity: [0, 1] }, { duration: 300 }); });
-  } else writing = head ? pause(home ? 500 : 60).then(() => ink(head, { speed: home ? 1 : 1.5 })).then(() => { head.style.opacity = ''; }) : null;
-  written.add(location.hash);
+    writing = pause(old ? 0 : 400)   // the first visit: a beat for the desert to be seen first
+      .then(() => sand(blow ? oldHead : null, head, layer, { duration }))
+      .then(played => (played ? null : ink(head)))
+      .then(() => { head.style.opacity = ''; layer.remove(); if (blow) { old.remove(); scrollTo(0, 0); } });
+  } else if (head) writing = ink(head).then(() => { head.style.opacity = ''; });
+  else if (blow) old.remove();
   if (home) await writing; else await pause(250);
   if (mine !== turn) return;
   headParts.forEach(p => { p.style.opacity = ''; motion(p, { opacity: [0, 1] }, { duration: 400 }); });
