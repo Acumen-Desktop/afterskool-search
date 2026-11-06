@@ -304,7 +304,7 @@ drawing-chips a:hover { scale: 1.15; }
 /* the small print stays readable where the page is scaled down (at --size .72 it would fall to about 10 px) */
 @media (max-width: 1500px) {
   card-still time, video-card small, video-card .at, spoken-line time, search-sheet small, drawing-family h3, year-trail small,
-  .door small, refine-row, kbd, moment-head .back, card-back, story-board time, drawing-strip span, idea-links { font-size: 12.5px; }
+  .door small, refine-row, kbd, moment-head .back, card-back, drawing-strip span, idea-links { font-size: 12.5px; }
   .idea small { font-size: 12px; }
 }
 drawing-chips img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
@@ -320,7 +320,7 @@ dialog::backdrop { background: rgb(var(--bg-rgb) / .55); backdrop-filter: blur(6
 
 dialog.reader { width: min(calc(1880 * var(--u)), 96vw); height: min(calc(1040 * var(--u)), 92vh); }
 reader-sheet {
-  display: grid; grid-template: "head head" auto "player lines" auto "more lines" minmax(0, 1fr) / minmax(0, 1.75fr) minmax(0, 1fr); gap: calc(20 * var(--u)) calc(24 * var(--u));
+  display: grid; grid-template: "head head" auto "player lines" auto "more lines" minmax(0, 1fr) / minmax(0, 1fr) minmax(calc(340 * var(--u)), 27%); gap: calc(20 * var(--u)) calc(24 * var(--u));
   height: 100%; box-sizing: border-box; padding: calc(24 * var(--u)) calc(28 * var(--u)); border-radius: calc(2 * var(--radius));
   background: rgb(var(--panel-rgb) / .97); border-top: calc(6 * var(--u)) solid var(--tone); box-shadow: 0 calc(30 * var(--u)) calc(90 * var(--u)) var(--shade);
 }
@@ -331,10 +331,11 @@ reader-head a { grid-row: 1 / 3; padding: calc(9 * var(--u)) calc(18 * var(--u))
 reader-head .shut { grid-row: 1 / 3; }
 reader-head .share { grid-row: 1 / 3; padding: calc(9 * var(--u)) calc(18 * var(--u)); border-radius: 999px; border: var(--hair) solid var(--line); background: none; cursor: pointer; font-size: calc(16 * var(--t)); white-space: nowrap; }
 reader-head .share:hover { background: var(--wash-hover); }
-player-frame { grid-area: player; display: block; align-self: start; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: rgb(var(--dark)); }
+/* as wide as the column, but never so tall that the drawings and chips under it fall off the sheet */
+player-frame { grid-area: player; display: block; align-self: start; justify-self: start; width: min(100%, calc(62vh * 16 / 9)); aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: rgb(var(--dark)); }
 /* no transcript: the video takes the whole sheet */
 reader-sheet[bare] { grid-template: "head" auto "player" minmax(0, 1fr) "more" auto / minmax(0, 1fr); }
-reader-sheet[bare] player-frame { height: 100%; max-width: 100%; justify-self: center; }
+reader-sheet[bare] player-frame { width: auto; height: 100%; max-width: 100%; justify-self: center; }
 reader-sheet[bare] spoken-lines { display: none; }
 reader-more { grid-area: more; display: grid; align-content: start; gap: calc(14 * var(--u)); min-height: 0; overflow: auto; }
 /* named and pictured in this video (the moments graph): small jumps, people in the accent, pictures in ink */
@@ -350,11 +351,6 @@ moment-chips time { color: var(--muted); font-size: calc(12 * var(--t)); font-va
 picture-finder { display: block; margin: 0 auto calc(48 * var(--u)); }
 picture-finder .note { text-align: center; }
 picture-finder li.none { list-style: none; text-align: center; color: var(--muted); font-style: italic; }
-story-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(10 * var(--u)); }
-story-board button { position: relative; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--paper); transition: translate .2s; }
-story-board button:hover { translate: 0 calc(-3 * var(--u)); }
-story-board img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
-story-board time { position: absolute; right: calc(6 * var(--u)); bottom: calc(6 * var(--u)); padding: calc(2 * var(--u)) calc(8 * var(--u)); border-radius: 999px; background: rgb(var(--dark) / .7); color: var(--paper); font-size: calc(13 * var(--t)); }
 drawing-strip { display: flex; gap: calc(12 * var(--u)); overflow-x: auto; padding-bottom: calc(4 * var(--u)); }
 drawing-strip button {
   flex: none; display: grid; grid-template-columns: calc(64 * var(--u)) calc(150 * var(--u)); grid-template-rows: auto 1fr; column-gap: calc(10 * var(--u));

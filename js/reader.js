@@ -5,7 +5,7 @@
 // allowed to be embedded): it says so and links to YouTube.
 import { el, clock } from './el.js';
 import { mark } from './doors.js';
-import { cat, credits, transcripts, scenes, when, moments } from './catalog.js';
+import { cat, credits, transcripts, when, moments } from './catalog.js';
 
 let api = null;
 function youtube() {
@@ -67,7 +67,6 @@ export async function openReader(id, at = 0) {
   const frame = el('player-frame', {}, el('div'));
   const seen = cat.drawings.flatMap(d => (d.occurrences || []).filter(o => o.video_id === v.id).map(o => ({ d, o }))).sort((a, b) => (a.o.timestamp ?? -1) - (b.o.timestamp ?? -1));   // the cover first
   const ideas = (v.concepts || []).map(c => cat.idea.get(c)).filter(Boolean);
-  const board = scenes(v).filter(s => s.at != null);   // a scene can be jumped to only when the video's length is known
   const lines = el('spoken-lines', { 'aria-label': 'What is said' }, el('p', { className: 'note', textContent: v.has_transcript ? 'Loading the words…' : 'No transcript for this one yet. The video still plays.' }));
   // a link to this video at the second it's playing now: this site's address, so it opens here, in the reader
   const share = el('button', { type: 'button', className: 'share', textContent: 'Copy link' });
@@ -86,11 +85,8 @@ export async function openReader(id, at = 0) {
       shut),
     frame,
     // under the player: the drawings that appear in this video, each a jump to its second, and the ideas it's about
-    seen.length || ideas.length || board.length ? el('reader-more', {},
-      // the storyboard: the video's scenes a quarter, half and three quarters through, each a jump there
-      board.length ? el('story-board', { 'aria-label': 'Scenes' }, ...board.map(s =>
-        el('button', { type: 'button', onclick: () => { player?.seekTo?.(s.at, true); player?.playVideo?.(); follow(s.at); } },
-          el('img', { src: s.src, alt: '', loading: 'lazy' }), el('time', { textContent: clock(s.at) })))) : null,
+    // (the three scene pictures that were here went, James 2026-11-05: they added nothing, and the video grew instead)
+    seen.length || ideas.length ? el('reader-more', {},
       seen.length ? el('drawing-strip', { 'aria-label': 'Drawings in this video' }, ...seen.map(({ d, o }) =>
         el('button', { type: 'button', title: d.name, onclick: () => { const s = o.timestamp ?? 0; player?.seekTo?.(s, true); player?.playVideo?.(); follow(s); } },
           el('img', { src: d.image_png, alt: '' }), el('time', { textContent: when(o) }), el('span', { textContent: d.name })))) : null,
