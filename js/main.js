@@ -11,7 +11,7 @@ import { arrival, fillSky } from './arrival.js';
 import { drawings, people, ideas, said } from './doors.js';
 import { tribute } from './tribute.js';
 import { videos } from './videos.js';
-import { openReader, watching } from './reader.js';
+import { openReader, watching, readerOpen } from './reader.js';
 import { openSearch } from './search.js';
 import { openAbout } from './about.js';
 import { ink } from './ink.js';
@@ -30,7 +30,8 @@ addEventListener('resize', fit);
 const main = document.querySelector('main');
 const sky = document.querySelector('memory-sky');
 const open = (id, at) => openReader(id, at);
-const navigate = to => { if (location.hash === to) route(); else location.hash = to; };
+// a move to another moment: a new history entry, then the page follows it (as it does for Back and Forward)
+const navigate = to => { if (location.pathname + location.hash !== `/${to}`) history.pushState(null, '', `/${to}`); route(); };
 
 function moment(hash) {
   const [name, query] = hash.replace(/^#/, '').split('?');
@@ -49,10 +50,21 @@ function moment(hash) {
 let turn = 0;
 // moments seen on this visit: coming back to one, its sand blows quicker
 const seen = new Set();
+// The page follows the address: a moment from its #, and a video from /watch/… (reader.js) over the moment that
+// entry remembers. Called on every history move (popstate: links, Back, Forward) and after each push
+let shownKey = null;
 async function route() {
   const mine = ++turn;
-  for (const d of document.querySelectorAll('dialog[open]')) d.close();   // a new moment: no sheet left over it
-  const next = moment(location.hash);
+  const w = watching();
+  const key = w ? history.state?.under ?? shownKey ?? '' : location.hash;
+  if (!w) for (const d of document.querySelectorAll('dialog[open]')) d.close();   // a new moment: no sheet left over it
+  // the same moment already showing (the reader closed or reopened over it): leave it be
+  if (key === shownKey && main.firstElementChild?.localName?.endsWith('-moment')) {
+    if (w && !readerOpen()) openReader(w.id, w.at, { push: false });
+    return;
+  }
+  shownKey = key;
+  const next = moment(key);
   const home = next.localName === 'arrival-moment';
   document.documentElement.toggleAttribute('home', home);
   if (home) fillSky(sky, open);
@@ -77,13 +89,14 @@ async function route() {
   parts.forEach(p => { p.style.opacity = '0'; });
   if (blow) main.append(next); else main.replaceChildren(next);
   watch(next);   // Mark's drawings on this moment draw themselves as they come into view
+  if (w && !readerOpen()) openReader(w.id, w.at, { push: false });   // Back onto a video: it opens again, where it was
   document.title = head ? `${head.textContent.replace(/[.?]$/, '')} · After Skool, half remembered` : 'After Skool, half remembered';
   // the heading's siblings in the head come in with it
   const headParts = head?.parentElement !== next ? [...head.parentElement.children].filter(c => c !== head) : [];
   headParts.forEach(p => { p.style.opacity = '0'; });
   // the arrival waits for its sand: it's the moment. Elsewhere the parts rise while the sand is still settling
-  const back = seen.has(location.hash);
-  seen.add(location.hash);
+  const back = seen.has(key);
+  seen.add(key);
   const duration = home ? (old ? 2400 : 2800) : back ? 1300 : 1800;
   let writing = null;
   if (head && sandy) {
@@ -112,7 +125,7 @@ if (!/Mac|iPhone|iPad/.test(navigator.platform)) document.querySelector('top-bar
 
 try {
   await loadCatalog();
-  addEventListener('hashchange', route);
+  addEventListener('popstate', route);   // links within the page, Back and Forward (a # link fires it too)
   // a shared link to a video (?watch=…): the moment under it, then the reader over it. The address without the video
   // goes first in the history, so closing the reader leaves the page behind it, as if the person had opened it here
   const shared = watching();

@@ -39,6 +39,9 @@ html:not([home]) desert-scene::after { background: rgb(var(--bg-rgb) / .74); }
 memory-sky { position: fixed; inset: var(--bar) 0 auto 0; height: 30vh; z-index: 1; pointer-events: none; overflow-x: clip; transition: opacity .6s; }
 html:not([home]) memory-sky { opacity: 0; visibility: hidden; transition: opacity .4s, visibility 0s .4s; }
 html:not([home]) sky-memory { animation-play-state: paused; }
+/* behind a sheet (a video, search, About) the sky stands still: under the blurred backdrop, every moving frame would
+   have to be blurred again, costing the computer for nothing anyone can see (James, 2026-11-05) */
+html:has(dialog[open]) sky-memory { animation-play-state: paused; }
 sky-memory {
   --w: calc(230 * var(--u));
   position: absolute; left: 0; top: calc(var(--lane) * 1% * .62); width: var(--w);

@@ -49,15 +49,18 @@ dialog.addEventListener('close', () => {
   if (history.state?.reader) history.back();
   else if (watching()) history.replaceState(history.state, '', address(null));   // closed by a move elsewhere: tidy the address
 });
-addEventListener('popstate', () => { if (dialog.open && !history.state?.reader) dialog.close(); });
+export const readerOpen = () => dialog.open;
 // a link inside the reader to another moment: close first (its entry comes off), then go
+// (James, 2026-11-05: after "More about", Back has to bring the video back.) The video's entry stays in the history;
+// the new moment is pushed after it, and the page goes there as Back and Forward do (main.js listens to popstate)
 function leaveTo(href) {
-  addEventListener('popstate', () => { location.hash = href; }, { once: true });
-  dialog.close();
+  history.pushState(null, '', `/${href}`);
+  dispatchEvent(new PopStateEvent('popstate', { state: null }));
 }
 dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });   // a click on the dimmed desert closes it
 
-export async function openReader(id, at = 0) {
+// push: false when the address already names this video (Back or Forward onto it): the reader opens over that entry
+export async function openReader(id, at = 0, { push = true } = {}) {
   const v = cat.video.get(id);
   if (!v) return;
   close();
@@ -93,8 +96,11 @@ export async function openReader(id, at = 0) {
       ideas.length ? el('idea-links', {}, el('span', { textContent: 'More about' }), ...ideas.map(i =>
         el('a', { href: `#videos?idea=${encodeURIComponent(i.id)}`, tone: i.tone, textContent: i.name, onclick: e => { e.preventDefault(); leaveTo(e.currentTarget.getAttribute('href')); } }))) : null) : null,
     lines));
-  if (!dialog.open) { history.pushState({ reader: true }, '', address(v.id, at)); dialog.showModal(); }
-  else history.replaceState({ reader: true }, '', address(v.id, at));   // another video in the open reader
+  // the entry remembers the moment under the reader, so coming back to it (Back, Forward) shows the same page beneath
+  const under = watching() ? history.state?.under ?? '' : location.hash;
+  if (!dialog.open && push) history.pushState({ reader: true, under }, '', address(v.id, at));
+  else history.replaceState({ reader: true, under }, '', address(v.id, at));   // another video, or this entry again
+  if (!dialog.open) dialog.showModal();
   shut.focus();
 
   // the player
