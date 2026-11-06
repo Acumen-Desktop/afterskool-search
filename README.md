@@ -40,7 +40,10 @@ tools find it with `--content PATH`, or `$AFTERSKOOL_CONTENT`, or `../after-skoo
 the site, the data and only the pictures it uses (about 1,350 files, 84 MB). It's unlisted unless `--listed` is
 given. Then:
 
-    npx wrangler pages deploy out --project-name afterskool-search
+    npx wrangler pages deploy            # wrangler.jsonc names the project and out/
+
+It's a classic Pages project (made with `wrangler pages project create --force`, since newer Wrangler otherwise
+makes a Worker), which is what gives it the `pages.dev` address.
 
 ## What's where
 - **Skeleton and look:**

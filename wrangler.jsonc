@@ -1,0 +1,8 @@
+{
+  // Cloudflare Pages: afterskool-search.pages.dev serves out/, which tools/pack.py makes (the site, its data, and
+  // only the pictures it uses). Deploy: python3 tools/pack.py --url https://afterskool-search.pages.dev
+  //                                     npx wrangler pages deploy
+  "name": "afterskool-search",
+  "pages_build_output_dir": "./out",
+  "compatibility_date": "2026-10-23"
+}
